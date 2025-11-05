@@ -983,7 +983,22 @@ def process_markdown(resource, mdc, process_quotes=True, number_headings=False, 
                 continue
 
             has_aside = True
-            p.name = "aside"
+
+            css_class = keyword.lower()
+            if css_class == "ifc":
+                try:
+                    keyword_2 = p.text.split(" ", 2)[1].lower()
+                except:
+                    pass
+                if keyword_2 in ("addendum", "change"):
+                    css_class = "change"
+                elif keyword_2 in ("deprecation",):
+                    css_class = "deprecation"
+
+            new_p = soup.new_tag('aside', attrs={'class': [f"aside-{css_class}"]})
+            new_p.extend(p.contents)
+            p.replace_with(new_p)
+            p = new_p
 
             if process_quotes:
                 if keyword.startswith("IFC"):
@@ -995,14 +1010,6 @@ def process_markdown(resource, mdc, process_quotes=True, number_headings=False, 
                     keyword = "-".join((keyword, keyword2))
                 else:
                     p.contents = BeautifulSoup(str(p).replace(keyword, "")).html.body.aside.contents
-
-            css_class = keyword.lower()
-            if "addendum" in css_class or "change" in css_class:
-                css_class = "change"
-            if "deprecation" in css_class:
-                css_class = "deprecation"
-                
-            p["class"] = f"aside-{css_class}"
 
             mark = soup.new_tag("mark")
             mark.string = keyword
